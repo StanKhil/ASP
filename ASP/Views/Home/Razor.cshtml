@@ -1,0 +1,45 @@
+﻿@model ASP.Models.Home.HomeRazorPageModel
+@{
+    ViewData["Title"] = "About Razor";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Про Razor</h1>
+</div>
+
+<p>
+    Razor - технологія, метою якогї є суміщення можливостей мови програмування
+    та розмітки. Основу складає символ &commat;, який у HTML змінюється на &amp;commat; 
+</p>
+
+
+<h2>Вирази</h2>
+<p>
+    Вирази - інструкції, що мають результат. У сенсі Razor цей резудьтат підставляється у тому місці, у якому згадується.
+    Синтаксис: <code>&commat;(expresion)</code>, наприклад,
+    <code>&commat;(2+3) = @(2 + 3)</code>
+</p>
+<pre>
+    &commat;{
+    int x = 10;
+    var rnd = new Random();
+    }
+</pre>
+@{
+    int x = 10;
+    var rnd = new Random();
+}
+<p>@x, @rnd.Next(), @x+1</p>
+
+
+@for(int i=0; i < @Model.Arr.Length; i++){
+    if(i % 2 ==0){
+        <i>@Model.Arr[i]</i>
+        <br />
+    }
+    else{
+        <b>@Model.Arr[i]</b>
+        <br />
+    }
+}
+
