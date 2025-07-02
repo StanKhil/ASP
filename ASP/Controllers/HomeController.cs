@@ -18,7 +18,12 @@ namespace ASP.Controllers
         {
             return View();
         }
-        
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
         public IActionResult Razor()
         {
             HomeRazorPageModel model = new()
@@ -28,9 +33,18 @@ namespace ASP.Controllers
             return View(model);
         }
 
-        public IActionResult Privacy()
+        public IActionResult Demo()
         {
-            return View();
+            Product product1 = new() { Name = "Product1", Price = 10, Amount = 1 };
+            Product product2 = new() { Name = "Product2", Price = 100, Amount = 20 };
+            Product product3 = new() { Name = "Product3", Price = 25, Amount = 4 };
+
+            HomeDemoPageModel model = new()
+            {
+                Products = [product1, product2, product3]
+            };
+
+            return View(model);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

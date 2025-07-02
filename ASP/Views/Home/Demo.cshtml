@@ -1,0 +1,23 @@
+﻿@model ASP.Models.Home.HomeDemoPageModel
+@{
+	ViewData["Title"] = "Demo";
+}
+
+<div class="text-center">
+	<h1 class="display-4">Demo</h1>
+</div>
+
+<table>
+	<tr>
+		<th style="border:1px solid black; width:100px;height:100px">Name</th>
+		<th style="border:1px solid black; width:100px;height:100px">Price</th>
+		<th style="border:1px solid black; width:100px;height:100px">Amount</th>
+	</tr>
+	@for(int i = 0;i < Model.Products.Length; i++){
+		<tr>
+			<td style="border:1px solid black; width:100px;height:100px">@Model.Products[i].Name</td>
+			<td style="border:1px solid black; width:100px;height:100px">@Model.Products[i].Price</td>
+			<td style="border:1px solid black; width:100px;height:100px">@Model.Products[i].Amount</td>
+		</tr>
+	}
+</table>
