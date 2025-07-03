@@ -1,3 +1,7 @@
+using ASP.Services.Identity;
+using ASP.Services.Random;
+using ASP.Services.Time;
+
 namespace ASP
 {
     public class Program
@@ -8,6 +12,11 @@ namespace ASP
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            builder.Services.AddSingleton<IRandomService, DefaultRandomService>();
+            builder.Services.AddSingleton<ITimeService, MilliSecTimeService>();
+            builder.Services.AddSingleton<IIdentityService, DefaultIdentityService>();
+            
 
             var app = builder.Build();
 

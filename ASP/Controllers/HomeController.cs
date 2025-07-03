@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using ASP.Models;
 using ASP.Models.Home;
+using ASP.Services.Random;
+using ASP.Services.Time;
+using ASP.Services.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ASP.Controllers
@@ -8,10 +11,16 @@ namespace ASP.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ITimeService _timeService;
+        private readonly IRandomService _random;
+        private readonly IIdentityService _identityService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ITimeService timeService, IRandomService random, IIdentityService identityService)
         {
             _logger = logger;
+            _timeService = timeService;
+            _random = random;
+            _identityService = identityService;
         }
 
         public IActionResult Index()
@@ -21,6 +30,16 @@ namespace ASP.Controllers
 
         public IActionResult Privacy()
         {
+            
+            return View();
+        }
+
+        public IActionResult Ioc()
+        {
+            ViewData["timestamp"] = _timeService.Timestamp() + " -- " + _random.Otp(4) + 
+                " -- Identity1: " + _identityService.Identity() + 
+                " -- Identity2: " + _identityService.Identity() + 
+                " -- Identity3: " + _identityService.Identity();
             return View();
         }
 
