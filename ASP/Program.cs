@@ -1,6 +1,9 @@
+using ASP.Data;
 using ASP.Services.Identity;
+using ASP.Services.Kdf;
 using ASP.Services.Random;
 using ASP.Services.Time;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASP
 {
@@ -16,7 +19,15 @@ namespace ASP
             builder.Services.AddSingleton<IRandomService, DefaultRandomService>();
             builder.Services.AddSingleton<ITimeService, MilliSecTimeService>();
             builder.Services.AddSingleton<IIdentityService, DefaultIdentityService>();
-            
+            builder.Services.AddSingleton<IKdfService, PbKdfService>();
+
+            builder.Services.AddDbContext<DataContext>(
+                options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDB")) 
+            );
+
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>  { options.IdleTimeout = TimeSpan.FromSeconds(10);
+                options.Cookie.HttpOnly = true; options.Cookie.IsEssential = true; });
 
             var app = builder.Build();
 
@@ -32,6 +43,7 @@ namespace ASP
             app.UseRouting();
 
             app.UseAuthorization();
+            app.UseSession();
 
             app.MapStaticAssets();
             app.MapControllerRoute(
