@@ -4,12 +4,13 @@ using ASP.Services.Kdf;
 using ASP.Services.Random;
 using ASP.Services.Time;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace ASP
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public async static Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,8 @@ namespace ASP
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
+
+            using (var scope = app.Services.CreateScope()) { var db = scope.ServiceProvider.GetRequiredService<DataContext>(); await db.Database.MigrateAsync(); }
 
             app.Run();
         }

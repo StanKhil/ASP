@@ -1,5 +1,6 @@
 ﻿using ASP.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace ASP.Data
 {
@@ -26,6 +27,7 @@ namespace ASP.Data
                 .HasOne(ua => ua.UserRole)
                 .WithMany(ur => ur.UserAccesses)
                 .HasForeignKey(ua => ua.RoleId);
+            modelBuilder.ApplyConfiguration(new Configuration.RoleConfiguration());
         }
     }
 }
