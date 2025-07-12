@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using ASP.Data.Entities
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -18,7 +19,7 @@
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ASP</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
@@ -39,11 +40,22 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Ioc">IoC</a>
                         </li>
                     </ul>
-                    <div>
+                    <div class="d-flex flex-row align-items-center">
                         <a class="btn btn-outline-secondary" asp-controller="User" asp-action="SignUp"><i class="bi bi-person-circle"></i></a>
                         <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#authModal">
                             <i class="bi bi-box-arrow-in-right"></i>
                         </button>
+                        @if (Context.Items["userAccess"] is UserAccess userAccess)
+                        {
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold mb-1"
+                                        style="width: 40px; height: 40px;"
+                                        data-bs-toggle="tooltip" title="@userAccess.UserData.Name">
+                                    @userAccess.UserData.Name[0]
+                                </span>
+                                <small class="text-muted">@userAccess.UserData.Name</small>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -87,6 +99,8 @@
                             </div>
                         </div>
                     </form>
+                    <div id="auth-error" class="alert alert-danger mt-3 d-none" role="alert">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="btn-cancel" data-bs-dismiss="modal">Скасувати</button>

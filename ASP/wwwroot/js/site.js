@@ -28,6 +28,7 @@ document.addEventListener('submit', e => {
         const btnCancel = document.getElementById("btn-cancel");
         if (!btnCancel) throw "btn-cancel not found";
         btnCancel.onclick = clearForm;
+        const alertContainer = document.getElementById("auth-error");
 
         let hasError = false;
 
@@ -42,6 +43,25 @@ document.addEventListener('submit', e => {
         } else markValid(passwordInput);
 
         if (hasError) return;
+        const credentials = new Base64().encode(
+            `${loginInput.value}:${passwordInput.value}`);
+        fetch('/User/SignIn', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Basic ${credentials}`
+            }
+        }).then(r => r.json())
+            .then(j => {
+                console.log(j);
+                if (j.status == 200) {
+                    window.location.reload();
+                }
+                else {
+                    showAuthError(j.data || "Невірний логін або пароль");
+                    console.log(j.data);
+                }
+            }
+            );
         console.log(loginInput.value + " " + passwordInput.value);
     }
 });
@@ -91,4 +111,11 @@ function clearForm() {
 
     const feedbackPassword = passwordInput.parentElement.querySelector(".invalid-feedback");
     if (feedbackPassword) feedbackPassword.textContent = "";
+}
+
+function showAuthError(message) {
+    const alert = document.getElementById("auth-error");
+    alert.textContent = message;
+    alert.classList.remove("d-none", "fade");
+    alert.classList.add("show");
 }

@@ -7,6 +7,8 @@ using ASP.Services.Random;
 using ASP.Services.Kdf;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace ASP.Controllers
 {
@@ -17,6 +19,88 @@ namespace ASP.Controllers
         private readonly DataContext _dataContext = context;
         private readonly ILogger<UserController> _logger = logger;
         private readonly Regex _passwordRegex = new Regex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$");
+
+        [HttpGet]
+        public JsonResult SignIn()
+        {
+            String authHeader = Request.Headers.Authorization.ToString();
+            if (String.IsNullOrEmpty(authHeader))
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = "Missing 'Authorization' header"
+                });
+            }
+            String authScheme = "Basic ";
+            if (!authHeader.StartsWith(authScheme))
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = $"Authorization scheme error: '{authScheme}' only"
+                });
+            }
+            String credentials = authHeader[authScheme.Length..];
+            String decoded;
+            try
+            {
+                decoded = System.Text.Encoding.UTF8.GetString(
+                Convert.FromBase64String(credentials));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Sign In: {ex}", ex.Message);
+                return Json(new
+                {
+                    Status = 401,
+                    Data = "Authorization credentials decode error"
+                });
+            }
+            String[] parts = decoded.Split(':', 2);
+            if(parts.Length != 2)
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = "Authorization credentials decompose error"
+                });
+            }
+            String login = parts[0];
+            String password = parts[1];
+            var userAccess = _dataContext
+                .UserAccesses
+                .AsNoTracking()
+                .Include(ua => ua.UserData)
+                .Include(ua => ua.UserRole)
+                .FirstOrDefault(ua => ua.Login == login);
+
+            if (userAccess == null)
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = "Authorization credentials rejected"
+                });
+            }
+            if(_kdfService.Dk(password, userAccess.Salt) != userAccess.Dk)
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = "Authorization credentials rejected."
+                });
+            }
+
+            HttpContext.Session.SetString("userAccess",
+                JsonSerializer.Serialize(userAccess));
+            return Json(new
+            {
+                Status = 200,
+                Data = "OK"
+            });
+
+        }
 
         public ViewResult SignUp()
         {
@@ -59,24 +143,25 @@ namespace ASP.Controllers
                     if (_dataContext.UserAccesses.Any(ua => ua.Login == model.UserLogin)) errors[nameof(model.UserLogin)] = "Login already in use";
                 }
             }
-            if (string.IsNullOrEmpty(model.UserPassword))
-            {
-                errors[nameof(model.UserPassword)] = "Password cannot be empty";
-                errors[nameof(model.UserRepeat)] = "Invalid original password";
-            }
-            else
-            {
-                if (!_passwordRegex.IsMatch(model.UserPassword))
-                {
-                    errors[nameof(model.UserPassword)] = "Password must be at least 12 characters long and contain lower, upper case letters, at least one number and at least one special character";
-                    errors[nameof(model.UserRepeat)] = "Invalid original password";
-                }
-                else
-                {
-                    if (model.UserRepeat != model.UserPassword) errors[nameof(model.UserRepeat)] = "Passwords must match";
-                }
-            }
-            if (!model.Agree) errors[nameof(model.Agree)] = "You must agree with policies!";
+            //if (string.IsNullOrEmpty(model.UserPassword))
+            //{
+            //    errors[nameof(model.UserPassword)] = "Password cannot be empty";
+            //    errors[nameof(model.UserRepeat)] = "Invalid original password";
+            //}
+            //else
+            //{
+            //    if (!_passwordRegex.IsMatch(model.UserPassword))
+            //    {
+            //        errors[nameof(model.UserPassword)] = "Password must be at least 12 characters long and contain lower, upper case letters, at least one number and at least one special character";
+            //        errors[nameof(model.UserRepeat)] = "Invalid original password";
+            //    }
+            //    else
+            //    {
+            //        if (model.UserRepeat != model.UserPassword) errors[nameof(model.UserRepeat)] = "Passwords must match";
+            //    }
+            //}
+            //if (!model.Agree) errors[nameof(model.Agree)] = "You must agree with policies!";
+            //MyS3cur3P@ssw0rd! user2
 
 
             #endregion

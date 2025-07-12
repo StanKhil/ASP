@@ -1,4 +1,5 @@
 using ASP.Data;
+using ASP.Middleware.Auth;
 using ASP.Services.Identity;
 using ASP.Services.Kdf;
 using ASP.Services.Random;
@@ -27,7 +28,7 @@ namespace ASP
             );
 
             builder.Services.AddDistributedMemoryCache();
-            builder.Services.AddSession(options =>  { options.IdleTimeout = TimeSpan.FromSeconds(10);
+            builder.Services.AddSession(options =>  { options.IdleTimeout = TimeSpan.FromSeconds(100);
                 options.Cookie.HttpOnly = true; options.Cookie.IsEssential = true; });
 
             var app = builder.Build();
@@ -47,6 +48,9 @@ namespace ASP
             app.UseSession();
 
             app.MapStaticAssets();
+
+            app.UseAuthSession();
+
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
