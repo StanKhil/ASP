@@ -28,6 +28,12 @@ namespace ASP.Controllers
             return View();
         }
 
+
+        public IActionResult Spa()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             

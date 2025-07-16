@@ -1,4 +1,9 @@
 ﻿@using ASP.Data.Entities
+@using System.Security.Claims
+@{
+    bool isAuth = Context.User.Identity?.IsAuthenticated ?? false;
+    String nameLetter = isAuth ? Context.User.Claims.First(c => c.Type == ClaimTypes.Name).Value : "";
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,22 +44,31 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Ioc">IoC</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Spa">SPA</a>
+                        </li>
                     </ul>
-                    <div class="d-flex flex-row align-items-center">
-                        <a class="btn btn-outline-secondary" asp-controller="User" asp-action="SignUp"><i class="bi bi-person-circle"></i></a>
-                        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#authModal">
-                            <i class="bi bi-box-arrow-in-right"></i>
-                        </button>
-                        @if (Context.Items["userAccess"] is UserAccess userAccess)
+                    <div >
+                        @if (isAuth)
                         {
-                            <div class="d-flex flex-column align-items-center">
+                            
                                 <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold mb-1"
-                                        style="width: 40px; height: 40px;"
-                                        data-bs-toggle="tooltip" title="@userAccess.UserData.Name">
-                                    @userAccess.UserData.Name[0]
+                                style="width: 40px; height: 40px;"
+                                data-bs-toggle="tooltip" >
+                                    @nameLetter[0]
                                 </span>
-                                <small class="text-muted">@userAccess.UserData.Name</small>
-                            </div>
+                                @* <small class="text-muted">@nameLetter</small> *@
+                            @* <div class="d-flex flex-column align-items-center">
+                            </div> *@
+                                    @* class="d-flex flex-row align-items-center" *@
+                            <a class="btn btn-outline-secondary" href="?logout"><i class="bi bi-box-arrow-right"></i></a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-secondary" asp-controller="User" asp-action="SignUp"><i class="bi bi-person-circle"></i></a>
+                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#authModal">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                            </button>
                         }
                     </div>
                 </div>

@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Spa";
+}
+
+<div class="text-center">
+    <h1 class="display-4">SPA</h1>
+</div>
+
+<p>
+    Технологія SPA пердбачає мінімальну кількість оновлень
+    сторінки. Контент змінюється засобами фреймворків. 
+    По суті сторінка залишаеться незмінною, у той час як контент
+    перерисовується.
+</p>
+<ul class="nav nav-tabs">
+    <li class="nav-item">
+        <button class="nav-link active" aria-current="page" onclick="navigate('home')">Active</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="navigate('privacy')">Privacy</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="navigate('auth')">Auth</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link disabled" aria-disabled="true" onclick="navigate('404')">404</button>
+    </li>
+</ul>
+<div id="spa-container"></div>

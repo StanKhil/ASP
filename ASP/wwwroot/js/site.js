@@ -119,3 +119,15 @@ function showAuthError(message) {
     alert.classList.remove("d-none", "fade");
     alert.classList.add("show");
 }
+
+function navigate(route) {
+    const spaContainer = document.getElementById("spa-container");
+    if (!spaContainer) throw "spa-container not found";
+
+    switch (route) {
+        case 'home': spaContainer.innerHTML = `<b>Home</b>`; break;
+        case 'privacy': spaContainer.innerHTML = `<b>Privacy</b>`; break;
+        case 'auth': spaContainer.innerHTML = `<b>Auth</b>`; break;
+        default: spaContainer.innerHTML = `<b>4044</b>`;
+    }
+}
