@@ -8,63 +8,50 @@ using ASP.Services.Kdf;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using ASP.Services.Time;
 
 
 namespace ASP.Controllers
 {
-    public class UserController(IRandomService randomService, IKdfService kdfService, DataContext context, ILogger<UserController> logger) : Controller
+    public class UserController(IRandomService randomService, IKdfService kdfService, DataContext context, ILogger<UserController> logger, ITimeService timeService) : Controller
     {
         private readonly IRandomService _randomService = randomService;
         private readonly IKdfService _kdfService = kdfService;
         private readonly DataContext _dataContext = context;
         private readonly ILogger<UserController> _logger = logger;
+        private readonly ITimeService _timeService = timeService;
         private readonly Regex _passwordRegex = new Regex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$");
 
-        [HttpGet]
-        public JsonResult SignIn()
+        private UserAccess Authenticate()
         {
-            String authHeader = Request.Headers.Authorization.ToString();
+            // Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+            String authHeader = Request.Headers.Authorization.ToString();  // Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+            _logger.LogInformation(authHeader);
             if (String.IsNullOrEmpty(authHeader))
             {
-                return Json(new
-                {
-                    Status = 401,
-                    Data = "Missing 'Authorization' header"
-                });
+                throw new Exception("Missing 'Authorization' header");
             }
             String authScheme = "Basic ";
             if (!authHeader.StartsWith(authScheme))
             {
-                return Json(new
-                {
-                    Status = 401,
-                    Data = $"Authorization scheme error: '{authScheme}' only"
-                });
+                throw new Exception($"Authorization scheme error: '{authScheme}' only");
             }
-            String credentials = authHeader[authScheme.Length..];
+            String credentials = authHeader[authScheme.Length..];  // QWxhZGRpbjpvcGVuIHNlc2FtZQ==
             String decoded;
             try
             {
                 decoded = System.Text.Encoding.UTF8.GetString(
-                Convert.FromBase64String(credentials));
+                    Convert.FromBase64String(credentials));
             }
             catch (Exception ex)
             {
-                _logger.LogError("Sign In: {ex}", ex.Message);
-                return Json(new
-                {
-                    Status = 401,
-                    Data = "Authorization credentials decode error"
-                });
+                _logger.LogError("SignIn: {ex}", ex.Message);
+                throw new Exception($"Authorization credentials decode error");
             }
             String[] parts = decoded.Split(':', 2);
-            if(parts.Length != 2)
+            if (parts.Length != 2)
             {
-                return Json(new
-                {
-                    Status = 401,
-                    Data = "Authorization credentials decompose error"
-                });
+                throw new Exception($"Authorization credentials decompose error");
             }
             String login = parts[0];
             String password = parts[1];
@@ -77,18 +64,28 @@ namespace ASP.Controllers
 
             if (userAccess == null)
             {
-                return Json(new
-                {
-                    Status = 401,
-                    Data = "Authorization credentials rejected"
-                });
+                throw new Exception($"Authorization credentials rejected");
             }
-            if(_kdfService.Dk(password, userAccess.Salt) != userAccess.Dk)
+            if (_kdfService.Dk(password, userAccess.Salt) != userAccess.Dk)
+            {
+                throw new Exception($"Authorization credentials rejected.");
+            }
+            return userAccess;
+        }
+
+        [HttpGet]
+        public JsonResult SignIn()
+        {
+            UserAccess userAccess;
+            try
+            {
+                userAccess = Authenticate();
+            }catch(Exception ex)
             {
                 return Json(new
                 {
                     Status = 401,
-                    Data = "Authorization credentials rejected."
+                    Data = ex.Message
                 });
             }
 
@@ -100,6 +97,46 @@ namespace ASP.Controllers
                 Data = "OK"
             });
 
+        }
+
+
+        [HttpGet]
+        public JsonResult LogIn()
+        {
+            UserAccess userAccess;
+            try
+            {
+                userAccess = Authenticate();
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = ex.Message
+                });
+            }
+
+            // Токени.
+            // цифрові "посвідчення", що несуть інформацію про користувача
+            // За прямою наявністю інформації токени поділяють на 
+            //  JWT - з наявністю інформації
+            //  Bearer - лише з ідентифікатором токена
+            AccessToken accessToken = new()
+            {
+                Jti = Guid.NewGuid().ToString(),
+                Sub = userAccess.Id,
+                Iat = _timeService.Timestamp().ToString(),
+                //Exp = (_timeService.Timestamp() + (long)(1e5)).ToString(),
+                Exp = (_timeService.Timestamp() + 30000).ToString(),
+                Iss = nameof(ASP),
+                Aud = userAccess.RoleId
+            };
+            return Json(new
+            {
+                Status = 200,
+                Data = accessToken
+            });
         }
 
         public ViewResult SignUp()

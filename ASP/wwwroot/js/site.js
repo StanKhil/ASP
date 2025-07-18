@@ -73,7 +73,7 @@ function unverified(input) {
     feedback.style.display = "none"
 }
 
-function showError(input, message){
+function showError(input, message) {
     input.classList.add("is-invalid");
     input.classList.remove("is-valid");
 
@@ -84,7 +84,7 @@ function showError(input, message){
     }
 }
 
-function markValid(input){
+function markValid(input) {
     input.classList.remove("is-invalid");
     input.classList.add("is-valid");
     const feedback = input.parentElement.querySelector(".invalid-feedback");
@@ -120,14 +120,102 @@ function showAuthError(message) {
     alert.classList.add("show");
 }
 
-function navigate(route) {
+
+document.addEventListener('DOMContentLoaded', () => {
+    for (let btn of document.querySelectorAll('[data-nav]')) {
+        btn.onclick = navigate;
+    }
+});
+
+function navigate(e) {
+    const targetBtn = e.target.closest('[data-nav]');
+    const route = targetBtn.getAttribute('data-nav');
+    if (!route) throw "route not found";
+    for (let btn of document.querySelectorAll('[data-nav]')) {
+        btn.classList.remove("active");
+    }
+    targetBtn.classList.add("active");
+    showPage(route)
+}
+
+function showPage(page) {
+    window.activePage = page;
     const spaContainer = document.getElementById("spa-container");
     if (!spaContainer) throw "spa-container not found";
 
-    switch (route) {
+    switch (page) {
         case 'home': spaContainer.innerHTML = `<b>Home</b>`; break;
         case 'privacy': spaContainer.innerHTML = `<b>Privacy</b>`; break;
-        case 'auth': spaContainer.innerHTML = `<b>Auth</b>`; break;
-        default: spaContainer.innerHTML = `<b>4044</b>`;
+        case 'auth': spaContainer.innerHTML = !!window.accessToken ? profileHtml : authHtml; break;
+        default: spaContainer.innerHTML = `<b>404</b>`;
     }
+}
+
+const authHtml = `<div>
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="user-login-addon"><i class="bi bi-key"></i></span>
+        <input name="user-login" type="text" class="form-control" placeholder="Login"
+                aria-label="Login" aria-describedby="user-login-addon">
+        <div class="invalid-feedback"></div>
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="user-password-addon"><i class="bi bi-unlock"></i></span>
+        <input name="user-password" type="password" class="form-control" placeholder="Password"
+                aria-label="Password" aria-describedby="user-password-addon">
+        <div class="invalid-feedback"></div>
+    </div>
+    <button type="submit" class="btn btn-primary" onclick="authClick()">Вхід</button>
+</div>`;
+
+const profileHtml = `<div>
+<h3>Вітаємо у кабінеті</h3>
+<button type="button" class="btn btn-warning" onclick="exitClick()">Вихід</button>
+</div>`
+
+function authClick() {
+    const login = document.querySelector('input[name="user-login"]').value;
+    const password = document.querySelector('input[name="user-password"]').value;
+    console.log(login, password);
+
+    const credentials = new Base64().encode(`${login}:${password}`);
+    fetch('/User/LogIn', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Basic ${credentials}`
+        }
+    }).then(r => r.json())
+        .then(j => {
+            if (j.status == 200) {
+                window.accessToken = j.data;
+                //console.log(window.accessToken);
+                window.accessToken.exp = Number(j.data.exp);
+                tokenExpCheck();
+                showPage(window.activePage);
+            }
+            else {
+                alert("Rejected");
+            }
+        });
+}
+
+let tokenInterval;
+
+function exitClick() {
+    window.accessToken = null;
+    clearInterval(tokenInterval);
+    showPage(window.activePage);
+}
+
+function tokenExpCheck() {
+    clearInterval(tokenInterval);
+
+    tokenInterval = setInterval(() => {
+        const exp = window.accessToken?.exp;
+        const now = Date.now();
+        console.log("EXP:", exp, "NOW:", now, "LEFT:", (exp - now) / 1000);
+        if (exp && now >= exp) {
+            alert("Сесія завершена. Повторіть вхід.");
+            exitClick();
+        }
+    }, 1000); 
 }
