@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Security.Claims;
+using ASP.Middleware.Auth;
 
 namespace ASP.Middleware.Auth
 {
@@ -40,4 +41,15 @@ namespace ASP.Middleware.Auth
             await _next(context);
         }
     }
+
+    public static class AuthTokenMiddlewareExtension
+    {
+        public static IApplicationBuilder UseAuthToken(this IApplicationBuilder builder)
+        {
+            return builder.UseMiddleware<AuthTokenMiddleware>();
+        }
+
+    }
 }
+
+

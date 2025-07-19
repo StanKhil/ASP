@@ -169,6 +169,7 @@ const authHtml = `<div>
 
 const profileHtml = `<div>
 <h3>Вітаємо у кабінеті</h3>
+<button type="button" class="btn btn-success" onclick="emailClick()">Лист</button>
 <button type="button" class="btn btn-warning" onclick="exitClick()">Вихід</button>
 </div>`
 
@@ -189,7 +190,7 @@ function authClick() {
                 window.accessToken = j.data;
                 //console.log(window.accessToken);
                 window.accessToken.exp = Number(j.data.exp);
-                tokenExpCheck();
+                //tokenExpCheck();
                 showPage(window.activePage);
             }
             else {
@@ -212,10 +213,20 @@ function tokenExpCheck() {
     tokenInterval = setInterval(() => {
         const exp = window.accessToken?.exp;
         const now = Date.now();
-        console.log("EXP:", exp, "NOW:", now, "LEFT:", (exp - now) / 1000);
+        //console.log("EXP:", exp, "NOW:", now, "LEFT:", (exp - now) / 1000);
         if (exp && now >= exp) {
             alert("Сесія завершена. Повторіть вхід.");
             exitClick();
         }
     }, 1000); 
+}
+
+function emailClick() {
+    fetch("/User/Email", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + window.accessToken.jti
+        }
+    }).then(r => r.json())
+    .then(console.log);
 }

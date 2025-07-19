@@ -9,18 +9,57 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using ASP.Services.Time;
+using ASP.Services.Email;
 
 
 namespace ASP.Controllers
 {
-    public class UserController(IRandomService randomService, IKdfService kdfService, DataContext context, ILogger<UserController> logger, ITimeService timeService) : Controller
+    public class UserController(IRandomService randomService, IKdfService kdfService, DataContext context, ILogger<UserController> logger, ITimeService timeService, IEmailService emailService) : Controller
     {
         private readonly IRandomService _randomService = randomService;
         private readonly IKdfService _kdfService = kdfService;
         private readonly DataContext _dataContext = context;
         private readonly ILogger<UserController> _logger = logger;
         private readonly ITimeService _timeService = timeService;
+        private readonly IEmailService _emailService = emailService;
         private readonly Regex _passwordRegex = new Regex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$");
+
+        [HttpPost]
+        public JsonResult Email()
+        {
+            if(HttpContext.User.Identity?.IsAuthenticated ?? false)
+            {
+                try
+                {
+                    _emailService.Send(
+                        "stankhil@gmail.com",
+                        "ASP",
+                        "Hello D!");
+                }
+                catch (Exception ex)
+                {
+                    return Json(new
+                    {
+                        Status = 500,
+                        Data = ex.Message
+                    });
+                }
+
+                return Json(new
+                {
+                    Status = 200,
+                    Data = "OK"
+                });
+            }
+            else
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = "UnAuthorized"
+                });
+            }
+        }
 
         private UserAccess Authenticate()
         {
@@ -127,11 +166,15 @@ namespace ASP.Controllers
                 Jti = Guid.NewGuid().ToString(),
                 Sub = userAccess.Id,
                 Iat = _timeService.Timestamp().ToString(),
-                //Exp = (_timeService.Timestamp() + (long)(1e5)).ToString(),
-                Exp = (_timeService.Timestamp() + 30000).ToString(),
+                Exp = (_timeService.Timestamp() + (long)(1e5)).ToString(),
+                //Exp = (_timeService.Timestamp() + 30000).ToString(),
                 Iss = nameof(ASP),
                 Aud = userAccess.RoleId
             };
+
+            _dataContext.AccessTokens.Add(accessToken);
+            _dataContext.SaveChanges();
+
             return Json(new
             {
                 Status = 200,
