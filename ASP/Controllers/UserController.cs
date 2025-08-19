@@ -10,11 +10,14 @@ using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using ASP.Services.Time;
 using ASP.Services.Email;
+using ASP.Services.JWT;
+using System.Security.Claims;
+using System.Text;
 
 
 namespace ASP.Controllers
 {
-    public class UserController(IRandomService randomService, IKdfService kdfService, DataContext context, ILogger<UserController> logger, ITimeService timeService, IEmailService emailService) : Controller
+    public class UserController(IRandomService randomService, IKdfService kdfService, DataContext context, ILogger<UserController> logger, ITimeService timeService, IJwtService jwtService, IEmailService emailService, DataAccessor dataAccessor) : Controller
     {
         private readonly IRandomService _randomService = randomService;
         private readonly IKdfService _kdfService = kdfService;
@@ -22,6 +25,8 @@ namespace ASP.Controllers
         private readonly ILogger<UserController> _logger = logger;
         private readonly ITimeService _timeService = timeService;
         private readonly IEmailService _emailService = emailService;
+        private readonly IJwtService _jwtService = jwtService;
+        private readonly DataAccessor _dataAccessor = dataAccessor;
         private readonly Regex _passwordRegex = new Regex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$");
 
         [HttpPost]
@@ -29,21 +34,21 @@ namespace ASP.Controllers
         {
             if(HttpContext.User.Identity?.IsAuthenticated ?? false)
             {
-                try
-                {
-                    _emailService.Send(
-                        "stankhil@gmail.com",
-                        "ASP",
-                        "Hello D!");
-                }
-                catch (Exception ex)
-                {
-                    return Json(new
-                    {
-                        Status = 500,
-                        Data = ex.Message
-                    });
-                }
+                //try
+                //{
+                //    _emailService.Send(
+                //        "stankhil@gmail.com",
+                //        "ASP",
+                //        "Hello D!");
+                //}
+                //catch (Exception ex)
+                //{
+                //    return Json(new
+                //    {
+                //        Status = 500,
+                //        Data = ex.Message
+                //    });
+                //}
 
                 return Json(new
                 {
@@ -175,10 +180,22 @@ namespace ASP.Controllers
             _dataContext.AccessTokens.Add(accessToken);
             _dataContext.SaveChanges();
 
+            var jwt = new
+            {
+                accessToken.Jti,
+                accessToken.Sub,
+                accessToken.Exp,
+                accessToken.Iat,
+                accessToken.Aud,
+                accessToken.Iss,
+                userAccess.UserData.Name,
+                userAccess.UserData.Email,
+            };
+
             return Json(new
             {
                 Status = 200,
-                Data = accessToken
+                Data = _jwtService.EncodeJwt(jwt)
             });
         }
 
@@ -197,6 +214,130 @@ namespace ASP.Controllers
                 HttpContext.Session.Remove("UserSignupFormModel");
             }
             return View(model);
+        }
+
+        public ViewResult Profile(String id)
+        {
+            UserProfilePageModel model = new();
+            var ua = _dataAccessor.GerUserAccessByLogin(id);
+            if (ua == null)
+            {
+                model.IsPersonal = null;
+            }
+            else
+            {
+                model.Name = ua.UserData.Name;
+                model.RegisteredAt = ua.UserData.RegisteredAt;
+                bool isAuthenticated = HttpContext.User.Identity?.IsAuthenticated ?? false;
+                if (isAuthenticated)
+                {
+                    model.Email = ua.UserData.Email;
+                    // дістаємо свій логін (з яким автентифіковані)
+                    String userLogin = HttpContext
+                        .User
+                        .Claims
+                        .First(c => c.Type == ClaimTypes.Sid)
+                        .Value;
+                    if (ua.Login == userLogin)  // Перегляд свого профілю
+                    {
+                        model.IsPersonal = true;
+                        model.Birthdate = ua.UserData.Birthdate;
+                    }
+                    else  // Перегляд профілю іншого користувача
+                    {
+                        model.IsPersonal = false;
+                    }
+                }
+                else  // Перегляд невідомого профілю у неавторизованому режимі
+                {
+                    model.IsPersonal = false;
+                }
+            }
+            return View(model);
+        }
+
+        [HttpPatch]
+        public async Task<JsonResult> Update()
+        {
+            bool isAuthenticated = HttpContext.User.Identity?.IsAuthenticated ?? false;
+            if (!isAuthenticated)
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = "Unauthorized"
+                });
+            }
+            var userLogin = HttpContext
+                .User
+                .Claims
+                .First(c => c.Type == ClaimTypes.Sid)
+                .Value;
+            var ua = _dataAccessor.GerUserAccessByLogin(userLogin, isEditable: true);
+            if(ua == null)
+            {
+                return Json(new
+                {
+                    Status = 403,
+                    Data = "Forbidden"
+                });
+            }
+            using StreamReader reader = new(Request.Body, Encoding.UTF8);
+            var requestBody = await reader.ReadToEndAsync();
+
+            if(requestBody == null)
+            {
+                return Json(new
+                {
+                    Status = 400,
+                    Data = "Body must not be empty"
+                });
+            }
+
+            JsonElement json;
+            try
+            {
+                json = JsonSerializer.Deserialize<JsonElement>(requestBody);
+            } catch (Exception ex) {
+                _logger.LogInformation("JSON decode error {ex}", ex.Message);
+                return Json(new
+                {
+                    Status = 400,
+                    Data = "Body must be valid JSON"
+                });
+            }
+
+            if (json.ValueKind != JsonValueKind.Array)
+            {
+                return Json(new
+                {
+                    Status = 422,
+                    Data = "Body must be valid JSON"
+                });
+
+            }
+
+            foreach(var element in json.EnumerateArray())
+            {
+                String value = element.GetProperty("value").GetString()!;
+                switch (element.GetProperty("field").GetString())
+                {
+                    case "Name": ua.UserData.Name = value; break;
+                    case "Email": ua.UserData.Email = value; break;
+                    default: return Json(new
+                    {
+                        Statu = 409,
+                        Data = "Conflict undefined field"
+                    });
+                }
+            }
+
+            await _dataContext.SaveChangesAsync();
+            return Json(new
+            {
+                Status = 202,
+                Data = "Accepted"
+            });
         }
 
         [HttpPost]

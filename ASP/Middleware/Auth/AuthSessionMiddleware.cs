@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Security.Claims;
 using ASP.Middleware.Auth;
+using Microsoft.Extensions.Logging;
 
 namespace ASP.Middleware.Auth
 {
@@ -13,7 +14,7 @@ namespace ASP.Middleware.Auth
         {
             _next = next; 
         }
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, ILogger<AuthSessionMiddleware> logger)
         {
             if (context.Request.Query.ContainsKey("logout"))
             {
@@ -26,6 +27,7 @@ namespace ASP.Middleware.Auth
                 var ua = JsonSerializer
                     .Deserialize<UserAccess>(
                         context.Session.GetString("userAccess")!);
+                //logger.LogInformation("login: {login}", ua.Login);
                 //context.Items["userAccess"] = ua;
                 context.User = new ClaimsPrincipal(
                     new ClaimsIdentity(
@@ -33,6 +35,7 @@ namespace ASP.Middleware.Auth
                         {
                             new (ClaimTypes.Name, ua!.UserData.Name),
                             new (ClaimTypes.Email, ua!.UserData.Email),
+                            new (ClaimTypes.Sid, ua.Login),
                         },
                         nameof(AuthSessionMiddleware)
                     )

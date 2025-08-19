@@ -2,6 +2,7 @@ using ASP.Data;
 using ASP.Middleware.Auth;
 using ASP.Services.Email;
 using ASP.Services.Identity;
+using ASP.Services.JWT;
 using ASP.Services.Kdf;
 using ASP.Services.Random;
 using ASP.Services.Time;
@@ -26,10 +27,13 @@ namespace ASP
             builder.Services.AddSingleton<IIdentityService, DefaultIdentityService>();
             builder.Services.AddSingleton<IKdfService, PbKdfService>();
             builder.Services.AddSingleton<IEmailService, GmailService>();
+            builder.Services.AddSingleton<IJwtService, JwtServiceV1>();
 
             builder.Services.AddDbContext<DataContext>(
                 options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDB")) 
             );
+
+            builder.Services.AddScoped<DataAccessor>();
 
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>  { options.IdleTimeout = TimeSpan.FromSeconds(100);
@@ -48,14 +52,17 @@ namespace ASP
             app.UseHttpsRedirection();
             app.UseRouting();
 
-            app.UseAuthToken();
+            //app.UseAuthToken();
+            
             app.UseAuthorization();
-            app.UseSession();
 
             app.MapStaticAssets();
 
+            app.UseSession();
+
             app.UseAuthSession();
-            
+
+            app.UseAuthJwt();
 
             app.MapControllerRoute(
                 name: "default",

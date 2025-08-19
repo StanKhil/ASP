@@ -3,6 +3,10 @@
 @{
     bool isAuth = Context.User.Identity?.IsAuthenticated ?? false;
     String nameLetter = isAuth ? Context.User.Claims.First(c => c.Type == ClaimTypes.Name).Value : "";
+
+	String userLogin = isAuth 
+    ? Context.User.Claims
+    .First(c => c.Type == ClaimTypes.Sid).Value : "";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -51,24 +55,22 @@
                     <div >
                         @if (isAuth)
                         {
-                            
+                            <a asp-area="" asp-controller="User" asp-action="Profile" asp-route-id="@userLogin">
                                 <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold mb-1"
-                                style="width: 40px; height: 40px;"
-                                data-bs-toggle="tooltip" >
+                                      style="width: 40px; height: 40px;"
+                                      data-bs-toggle="tooltip">
                                     @nameLetter[0]
                                 </span>
-                                @* <small class="text-muted">@nameLetter</small> *@
-                            @* <div class="d-flex flex-column align-items-center">
-                            </div> *@
-                                    @* class="d-flex flex-row align-items-center" *@
+                            </a>
                             <a class="btn btn-outline-secondary" href="?logout"><i class="bi bi-box-arrow-right"></i></a>
                         }
                         else
                         {
                             <a class="btn btn-outline-secondary" asp-controller="User" asp-action="SignUp"><i class="bi bi-person-circle"></i></a>
                             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#authModal">
-                                <i class="bi bi-box-arrow-in-right"></i>
+                                  <i class="bi bi-box-arrow-in-right"></i> 
                             </button>
+                            
                         }
                     </div>
                 </div>
