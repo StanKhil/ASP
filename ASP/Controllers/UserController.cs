@@ -13,6 +13,8 @@ using ASP.Services.Email;
 using ASP.Services.JWT;
 using System.Security.Claims;
 using System.Text;
+using System.Diagnostics.Eventing.Reader;
+using Microsoft.AspNetCore.Authentication;
 
 
 namespace ASP.Controllers
@@ -28,11 +30,12 @@ namespace ASP.Controllers
         private readonly IJwtService _jwtService = jwtService;
         private readonly DataAccessor _dataAccessor = dataAccessor;
         private readonly Regex _passwordRegex = new Regex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$");
+        const String authSessionKey = "userAccess";
 
         [HttpPost]
         public JsonResult Email()
         {
-            if(HttpContext.User.Identity?.IsAuthenticated ?? false)
+            if (HttpContext.User.Identity?.IsAuthenticated ?? false)
             {
                 //try
                 //{
@@ -99,12 +102,7 @@ namespace ASP.Controllers
             }
             String login = parts[0];
             String password = parts[1];
-            var userAccess = _dataContext
-                .UserAccesses
-                .AsNoTracking()
-                .Include(ua => ua.UserData)
-                .Include(ua => ua.UserRole)
-                .FirstOrDefault(ua => ua.Login == login);
+            var userAccess = _dataAccessor.GerUserAccessByLogin(login);
 
             if (userAccess == null)
             {
@@ -124,7 +122,8 @@ namespace ASP.Controllers
             try
             {
                 userAccess = Authenticate();
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return Json(new
                 {
@@ -133,7 +132,7 @@ namespace ASP.Controllers
                 });
             }
 
-            HttpContext.Session.SetString("userAccess",
+            HttpContext.Session.SetString(authSessionKey,
                 JsonSerializer.Serialize(userAccess));
             return Json(new
             {
@@ -274,7 +273,7 @@ namespace ASP.Controllers
                 .First(c => c.Type == ClaimTypes.Sid)
                 .Value;
             var ua = _dataAccessor.GerUserAccessByLogin(userLogin, isEditable: true);
-            if(ua == null)
+            if (ua == null)
             {
                 return Json(new
                 {
@@ -285,7 +284,7 @@ namespace ASP.Controllers
             using StreamReader reader = new(Request.Body, Encoding.UTF8);
             var requestBody = await reader.ReadToEndAsync();
 
-            if(requestBody == null)
+            if (requestBody == null)
             {
                 return Json(new
                 {
@@ -298,7 +297,9 @@ namespace ASP.Controllers
             try
             {
                 json = JsonSerializer.Deserialize<JsonElement>(requestBody);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _logger.LogInformation("JSON decode error {ex}", ex.Message);
                 return Json(new
                 {
@@ -317,18 +318,19 @@ namespace ASP.Controllers
 
             }
 
-            foreach(var element in json.EnumerateArray())
+            foreach (var element in json.EnumerateArray())
             {
                 String value = element.GetProperty("value").GetString()!;
                 switch (element.GetProperty("field").GetString())
                 {
                     case "Name": ua.UserData.Name = value; break;
                     case "Email": ua.UserData.Email = value; break;
-                    default: return Json(new
-                    {
-                        Statu = 409,
-                        Data = "Conflict undefined field"
-                    });
+                    default:
+                        return Json(new
+                        {
+                            Statu = 409,
+                            Data = "Conflict undefined field"
+                        });
                 }
             }
 
@@ -349,7 +351,7 @@ namespace ASP.Controllers
             return RedirectToAction(nameof(SignUp));
         }
 
-        private Dictionary<String,String> ProcessSignupData(UserSignupFormModel model)
+        private Dictionary<String, String> ProcessSignupData(UserSignupFormModel model)
         {
             Dictionary<String, String> errors = [];
             #region Validation
@@ -422,16 +424,74 @@ namespace ASP.Controllers
                 {
                     _dataContext.SaveChanges();
                     _dataContext.Database.CommitTransaction();
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     _logger.LogError("ProcessSignupData: {ex}", ex.Message);
                     _dataContext.Database.RollbackTransaction();
                     errors["500"] = "Problem with saving data";
                 }
-                
+
 
             }
             return errors;
+        }
+
+        [HttpDelete]
+        public async Task<JsonResult> DeleteAsync()
+        {
+            String authControl = HttpContext.Request.Headers["Authentication-Control"].ToString();
+            if (String.IsNullOrEmpty(authControl))
+            {
+                return Json(new
+                {
+                    Status = 400,
+                    Data = "Bad Request: Authentication-Control header is required"
+                });
+            }
+            authControl = Encoding.UTF8.GetString(Base64UrlTextEncoder.Decode(authControl));
+
+            bool isAuthenticated = HttpContext.User.Identity?.IsAuthenticated ?? false;
+            if (!isAuthenticated)
+            {
+                return Json(new
+                {
+                    Status = 401,
+                    Data = "Unauthorized"
+                });
+            }
+            String userLogin = HttpContext
+                .User
+                .Claims
+                .First(c => c.Type == ClaimTypes.Sid)
+                .Value;
+            if(userLogin != authControl)
+            {
+                return Json(new
+                {
+                    Status = 403,
+                    Data = "Forbidden: You can only delete your own account"
+                });
+            }
+
+            bool isDeleted = await _dataAccessor.DeleteUserAsync(authControl);
+            if (isDeleted)
+            {
+                HttpContext.Session.Remove(authSessionKey);
+                return Json(new
+                {
+                    Status = 200,
+                    Data = "User deleted successfully"
+                });
+            }
+            else
+            {
+                return Json(new
+                {
+                    Status = 409,
+                    Data = "User deletion conflict"
+                });
+            }
         }
     }
 }

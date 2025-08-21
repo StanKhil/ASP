@@ -236,6 +236,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editProfileBtn) {
         editProfileBtn.onclick = editProfileBtnClick;
     }
+
+    const deleteProfileBtn = document.getElementById("delete-profile-btn");
+    if (deleteProfileBtn) {
+        deleteProfileBtn.onclick = deleteProfileBtnClick;
+    }
 });
 function editProfileBtnClick() {
     let changes = [];
@@ -261,12 +266,36 @@ function editProfileBtnClick() {
             if (confirm(`Update data: ${msg}`)) {
                 fetch("/User/Update", {
                     method: 'PATCH',
-                    header: {
+                    headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(changes)
                 }).then(r => r.json()).then(console.log);
             }
         }
+    }
+}
+
+function deleteProfileBtnClick() {
+    if (confirm(`Delete profile:`)) {
+        let login = prompt("Enter your login to confirm deletion:");
+        if (login == null || login.trim() == "") {
+            alert("Deletion cancelled.");
+            return;
+        }
+        fetch("/User/Delete", {
+            method: 'DELETE',
+            headers: {
+                'Authentication-Control': new Base64().encodeUrl(login)
+            },
+        }).then(r => r.json()).then(j => {
+            console.log(j);
+            if (j.status == 200) {
+                alert("Profile deleted successfully.");
+                window.location = '/';
+            } else {
+                alert("Error deleting profile: " + j.data);
+            }
+        });
     }
 }
