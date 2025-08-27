@@ -33,3 +33,10 @@ body {
 [contenteditable] {
     border: solid 1px gray;
 }
+
+#product-add-form, #group-add-form {
+    border: solid 1px gray;
+    border-radius: 5px;
+    margin: 10px;
+    padding: 10px;
+}

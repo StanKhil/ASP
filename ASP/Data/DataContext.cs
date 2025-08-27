@@ -1,4 +1,5 @@
-﻿using ASP.Data.Entities;
+﻿using ASP.Data.Configurations;
+using ASP.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -10,6 +11,9 @@ namespace ASP.Data
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<UserAccess> UserAccesses { get; set; }
         public DbSet<AccessToken> AccessTokens { get; set; } 
+        public DbSet<ProductGroup> ProductGroups { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<ItemImage> ItemsImages { get; set; }
 
         public DataContext(DbContextOptions options) : base(options) { }
 
@@ -37,6 +41,11 @@ namespace ASP.Data
                 .HasForeignKey(at => at.Sub);
 
             modelBuilder.ApplyConfiguration(new Configuration.RoleConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductConfiguration());
+            modelBuilder.ApplyConfiguration(new GroupConfiguration());
+
+            modelBuilder.Entity<ItemImage>()
+                .HasKey(i => new { i.ItemId, i.ImageUrl });
         }
     }
 }
