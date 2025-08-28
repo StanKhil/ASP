@@ -42,6 +42,11 @@ namespace ASP
                 options.Cookie.HttpOnly = true; options.Cookie.IsEssential = true; });
 
             var app = builder.Build();
+            app.UseRequestLocalization(opt =>
+            {
+                opt.DefaultRequestCulture = new
+                Microsoft.AspNetCore.Localization.RequestCulture("en-US");
+            });
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

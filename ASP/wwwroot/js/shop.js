@@ -14,7 +14,19 @@ function handleAddProduct(form) {
     fetch(form.action, {
         method: "POST",
         body: new FormData(form)
-    }).then(r => r.json()).then(console.log).catch(console.error);
+    })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.name);
+
+            if (data.status === 201) {
+                form.reset();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Unexpected error");
+        });
 }
 
 function handleAddGroup(form) {

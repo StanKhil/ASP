@@ -23,6 +23,7 @@ namespace ASP.Services.Storage
                 ".jpg" => "image/jpeg",
                 ".png" => "image/png",
                 ".bmp" => "image/bmp",
+                ".jpeg" => "image/jpeg",
                 _ => throw new ArgumentException($"Unsupported exception '{ext}'")
             };
         }

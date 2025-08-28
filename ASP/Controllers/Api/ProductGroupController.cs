@@ -5,7 +5,7 @@ using ASP.Services.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ASP.Controllers
+namespace ASP.Controllers.Api
 {
     [Route("api/product-group")]
     [ApiController]
@@ -17,10 +17,10 @@ namespace ASP.Controllers
 
         private object AnyRequest()
         {
-            String methodName = "Execute" + HttpContext.Request.Method;
-            var type = this.GetType();
+            string methodName = "Execute" + HttpContext.Request.Method;
+            var type = GetType();
             var action = type.GetMethod(methodName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if(HttpContext.Request.Method == "GET")
+            if (HttpContext.Request.Method == "GET")
             {
                 return action.Invoke(this, null);
             }
@@ -40,7 +40,7 @@ namespace ASP.Controllers
             }
 
             return action.Invoke(this, null);
-           
+
 
             //return HttpContext.Request.Method switch
             //{
@@ -61,9 +61,9 @@ namespace ASP.Controllers
         }
 
         [HttpPost]
-        public Object ExecutePOST(ApiGroupFormModel formModel)
+        public object ExecutePOST(ApiGroupFormModel formModel)
         {
-            if (String.IsNullOrEmpty(formModel.Slug))
+            if (string.IsNullOrEmpty(formModel.Slug))
             {
                 return new { status = 400, name = "Slug could not be empty" };
             }
@@ -71,7 +71,7 @@ namespace ASP.Controllers
             {
                 return new { status = 409, name = "Slug is used by other group" };
             }
-            if (!String.IsNullOrEmpty(formModel.ParentId))
+            if (!string.IsNullOrEmpty(formModel.ParentId))
             {
                 if (!Guid.TryParse(formModel.ParentId, out Guid parsedId))
                 {
@@ -84,7 +84,7 @@ namespace ASP.Controllers
                 }
             }
 
-            String savedName;
+            string savedName;
             try
             {
                 _storageService.TryGetMimeType(formModel.Image.FileName);
