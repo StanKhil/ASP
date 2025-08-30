@@ -1,0 +1,21 @@
+﻿@model ASP.Models.Shop.ShopGroupPageModel
+
+@if(Model.ProductGroup == null){
+	<div class="alert alert-danger" role="alert">Group Not Found</div>
+}
+else{
+	<div class="d-flex overflow-auto flex-nowrap mb-4" style="gap: 10px;">
+        @foreach (var g in Model.ProductGroups)
+        {
+            @Html.DisplayFor(m => g, "ProductGroupMini")
+        }
+    </div>
+
+	<div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mt-4">
+		@foreach (var p in Model.ProductGroup.Products)
+		{
+			@Html.DisplayFor(m => p)
+		}
+	</div>
+}
+

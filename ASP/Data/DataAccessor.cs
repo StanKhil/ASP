@@ -98,6 +98,21 @@ namespace ASP.Data
             }
         }
 
+        public ProductGroup? GetProductGroupBySlug(String slug)
+        {
+            return _dataContext.ProductGroups
+                .Include(g => g.Products)
+                .AsNoTracking()
+                .FirstOrDefault(g => g.Slug == slug && g.DeletedAt == null);
+        }
+
+        public Product? GetProductBySlug(String slug)
+        {
+            return _dataContext.Products
+                .AsNoTracking()
+                .FirstOrDefault(p => (p.Slug == slug || p.Id.ToString() == slug) && p.DeletedAt == null);
+        }
+
         public void AddProduct(ApiProductDataModel model)
         {
             Guid groupId;

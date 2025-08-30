@@ -1,4 +1,5 @@
-﻿@{
+﻿@model ASP.Models.Shop.ShopIndexPageModel
+@{
     ViewData["Title"] = "Shop";
     bool isAuthenticated = Context.User.Identity?.IsAuthenticated ?? false;
 }
@@ -11,3 +12,10 @@
 @if(isAuthenticated){
     <a asp-action="Admin">Dashboard</a>
 }
+
+<div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mt-4">
+    @foreach (var p in Model.ProductGroups)
+    {
+	    @Html.DisplayFor(m => p);
+    }
+</div>

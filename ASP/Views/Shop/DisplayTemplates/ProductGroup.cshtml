@@ -1,0 +1,16 @@
+﻿@model ASP.Data.Entities.ProductGroup
+<div class="col">
+	<div class="card h-100">
+		<img src="/Storage/Item/@(Model.ImageUrl)" class="card-img-top" alt="@(Model.ImageUrl)"/>
+		<div class="card-body">
+			<a asp-action="Group" asp-route-id="@(Model.Slug)" class="nav-link">
+				<h5 class="card-title">
+					@Model.Name
+				</h5>
+				<p class="card-text">
+					@Model.Description
+				</p>
+			</a>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,10 @@
+﻿@model ASP.Data.Entities.ProductGroup
+
+<div class="card d-inline-block me-2" style="width: 120px;">
+    <img src="/Storage/Item/@(Model.ImageUrl)" class="card-img-top" alt="@Model.Name" />
+    <div class="card-body p-2 text-center">
+        <a asp-action="Group" asp-route-id="@(Model.Slug)" class="nav-link">
+            <small>@Model.Name</small>
+        </a>
+    </div>
+</div>

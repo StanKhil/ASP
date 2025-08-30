@@ -1,4 +1,6 @@
-﻿namespace ASP.Data.Entities
+﻿using System.Collections.ObjectModel;
+
+namespace ASP.Data.Entities
 {
     public class ProductGroup
     {
@@ -10,6 +12,6 @@
         public String ImageUrl { get; set; } = null!;
         public DateTime? DeletedAt { get; set; }
         public ProductGroup? ParentGroup { get; set; }
-        public IEnumerable<Product> Products { get; set; } = [];
+        public Collection<Product> Products { get; set; } = [];
     }
 }
