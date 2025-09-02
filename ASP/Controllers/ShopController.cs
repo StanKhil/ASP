@@ -46,9 +46,15 @@ namespace ASP.Controllers
         {
             ShopItemPageModel model = new()
             {
+                ProductGroups = _dataAccessor.GetProductGroups().ToList(),
                 Product = _dataAccessor.GetProductBySlug(id)
             };
             return View(model);
+        }
+
+        public IActionResult Cart()
+        {
+            return View();
         }
     }
 }

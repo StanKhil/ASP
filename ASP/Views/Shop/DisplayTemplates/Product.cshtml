@@ -13,9 +13,12 @@
 				</p>
 			</a>
 		</div>
-		<div class="card-footer bg-transparent d-flex justify-content-between">
+		<div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
 			<span>₴ @(Model.Price.ToString("F2"))</span>
-			<span>Наявно @(Model.Stock) шт</span>
+			<div data-in-cart="@(Model.Stock > 15 ? 1 : 0)">
+				<a asp-action="Cart" class="in-cart btn btn-success"><i class="bi bi-cart-check"></i></a>
+				<button data-product-id="@Model.Id" class="not-in-cart btn btn-outline-success"><i class="bi bi-cart"></i></button>
+			</div>
 		</div>
 	</div>	
 </div>

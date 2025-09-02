@@ -6,5 +6,30 @@
 }
 else
 {
-	@Model.Product.Name
+	<div class="d-flex overflow-auto flex-nowrap mb-4" style="gap: 10px;">
+		@foreach (var g in Model.ProductGroups)
+		{
+			@Html.DisplayFor(m => g, "ProductGroupMini")
+		}
+	</div>
+	<div class="row">
+		<div class="col col-4">
+			<img class="item-page-img" src="/Storage/Item/@(Model.Product.ImageUrl)"/>
+			<img class="item-page-img" src="/Storage/Item/@(Model.Product.ImageUrl)"/>
+			<img class="item-page-img" src="/Storage/Item/@(Model.Product.ImageUrl)" />
+		</div>
+		<div class="col col-8">
+			<h2>@Model.Product.Name</h2>
+			<h4>@Model.Product.Description</h4>
+			<h3>@Model.Product.Price.ToString("F2")</h3>
+			@if(Model.Product.Stock > 0){
+				<b>In Stock</b>
+				<br/>
+				<button data-product-id="@Model.Product.Id" class="btn btn-primary">Add to Cart</button>
+			}
+			else{
+				<b>Out of Stock</b>
+			}
+		</div>
+	</div>
 }

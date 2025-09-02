@@ -5,5 +5,6 @@ namespace ASP.Models.Shop
     public class ShopItemPageModel
     {
         public Product? Product { get; set; } = null!;
+        public IEnumerable<ProductGroup> ProductGroups { get; set; } = [];
     }
 }

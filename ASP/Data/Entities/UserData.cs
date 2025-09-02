@@ -14,6 +14,6 @@ namespace ASP.Data.Entities
         // інверсна навігаційна властивість - властивість у іншій сутності по відношенню до даної
         [JsonIgnore]
         public List<UserAccess> UserAccesses { get; set; } = [];
-
+        public ICollection<Cart> Carts { get; set; } = [];
     }
 }

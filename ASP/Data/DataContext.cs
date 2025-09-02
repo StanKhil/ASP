@@ -15,6 +15,9 @@ namespace ASP.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<ItemImage> ItemsImages { get; set; }
 
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+
         public DataContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -46,6 +49,19 @@ namespace ASP.Data
 
             modelBuilder.Entity<ItemImage>()
                 .HasKey(i => new { i.ItemId, i.ImageUrl });
+
+            modelBuilder.Entity<Cart>()
+                .HasOne(c => c.User)
+                .WithMany(u => u.Carts)
+                .HasForeignKey(c => c.UserId);
+
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Cart)
+                .WithMany(c => c.CartItems);
+
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Product)
+                .WithMany();
         }
     }
 }

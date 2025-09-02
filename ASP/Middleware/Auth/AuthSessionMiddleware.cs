@@ -36,6 +36,7 @@ namespace ASP.Middleware.Auth
                             new (ClaimTypes.Name, ua!.UserData.Name),
                             new (ClaimTypes.Email, ua!.UserData.Email),
                             new (ClaimTypes.Sid, ua.Login),
+                            new (ClaimTypes.PrimarySid, ua.UserData.Id.ToString()),
                         },
                         nameof(AuthSessionMiddleware)
                     )

@@ -142,5 +142,10 @@ namespace ASP.Data
                 throw;
             }
         }
+
+        public void AddToCart(String userId, String id)
+        {
+            
+        }
     }
 }
