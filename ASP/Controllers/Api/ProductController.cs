@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ASP.Filters;
 using ASP.Data;
+using ASP.Models.Rest;
 
 namespace ASP.Controllers.Api
 {
@@ -26,36 +27,49 @@ namespace ASP.Controllers.Api
         [HttpPost]
         public async Task<object> CreateProduct(ApiProductFormModel formModel)
         {
+            RestResponse response = new();
+            response.Meta.ResourceName = "Shop Api 'product'";
+            response.Meta.ResourceUrl = $"/api/product";
+            response.Meta.Method = "POST";
+            response.Meta.Manipulations = ["POST", "PATCH", "DELETE"];
+            response.Meta.DataType = "string";
+
             if (string.IsNullOrWhiteSpace(formModel.GroupId) || !_dataAccessor.IsGroupExists(formModel.GroupId))
             {
-                return new { status = 400, name = "Invalid or missing GroupId" };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = "Invalid or missing GroupId";
             }
 
             if (string.IsNullOrWhiteSpace(formModel.Name) || formModel.Name.Length < 3 || formModel.Name.Length > 100)
             {
-                return new { status = 400, name = "Invalid product name" };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = "Name must be between 3 and 100 characters";
             }
 
             if (!string.IsNullOrWhiteSpace(formModel.Description) && formModel.Description.Length > 1000)
             {
-                return new { status = 400, name = "Description too long" };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = "Description cannot be longer than 1000 characters";
             }
 
             if (formModel.Price <= 0)
             {
-                return new { status = 400, name = "Price must be greater than 0" };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = "Price must be positive";
             }
 
             if (formModel.Stock < 0)
             {
-                return new { status = 400, name = "Stock cannot be negative" };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = "Stock cannot be negative";
             }
 
             if (formModel.Slug != null)
             {
                 if (_dataAccessor.IsProductSlugUsed(formModel.Slug))
                 {
-                    return new { status = 409, name = "Slug is used by other product" };
+                    response.Status = RestStatus.RestStatus400;
+                    response.Data = "Slug is already used";
                 }
             }
             
@@ -69,7 +83,8 @@ namespace ASP.Controllers.Api
                 }
                 catch (Exception ex)
                 {
-                    return new { status = 400, name = ex.Message };
+                    response.Status = RestStatus.RestStatus400;
+                    response.Data = $"Image error: {ex.Message}";
                 }
             }
             try
@@ -85,17 +100,18 @@ namespace ASP.Controllers.Api
                     Slug = formModel.Slug,
 
                 });
-                return new { status = 201, name = $"{formModel.Name} created" };
+                response.Status = RestStatus.RestStatus201;
             }
             catch (Exception e) when (e is ArgumentNullException || e is FormatException)
             {
-                return new { status = 400, name = e.Message };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = e.Message;
             }
             catch
             {
-                return new { status = 500, name = "Error" };
+                response.Status = RestStatus.RestStatus500;
             }
-            
+            return response;
         }
     }
 }

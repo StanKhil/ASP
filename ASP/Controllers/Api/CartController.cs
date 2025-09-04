@@ -1,4 +1,5 @@
 ﻿using ASP.Data;
+using ASP.Models.Rest;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,38 +15,43 @@ namespace ASP.Controllers.Api
         [HttpPost("{id}")]
         public Object AddToCart([FromRoute] String id)
         {
-            if(HttpContext.User.Identity?.IsAuthenticated ?? false)
+            RestResponse response = new();
+            response.Meta.ResourceName = "Shop Api 'user Cart'";
+            response.Meta.ResourceUrl = $"/api/cart/{id}";
+            response.Meta.Method = "POST";
+            response.Meta.Manipulations = ["POST", "PATCH", "DELETE"];
+
+            if (HttpContext.User.Identity?.IsAuthenticated ?? false)
             {
                 String? userId = HttpContext.User.Claims
                     .FirstOrDefault (c => c.Type == ClaimTypes.PrimarySid)?.Value;
                 if(userId == null)
                 {
-                    HttpContext.Response.StatusCode = 403;
-                    return new { message = "PrimarySid not found" };
+                    response.Status = RestStatus.RestStatus403;
+                    response.Data = "PrimarySid not found";
+                    response.Meta.DataType = "string";
                 }
 
-                try
+                else try
                 {
                     _dataAccessor.AddToCart(userId, id);
-                    return new { message = "OK" };
                 }
                 catch (Exception e) when (e is ArgumentNullException || e is FormatException)
                 {
-                    HttpContext.Response.StatusCode = 400;
-                    return new { name = e.Message };
-                }
+                    response.Status = RestStatus.RestStatus400;
+                    response.Data = e.Message;
+                        response.Meta.DataType = "string";
+                    }
                 catch
                 {
-                    HttpContext.Response.StatusCode = 500;
-                    return new { message = "Internal Error" };
+                    response.Status = RestStatus.RestStatus500;
                 }
             }
             else
             {
-                HttpContext.Response.StatusCode = 401;
-                return new { message = "UnAuthorized" };
+                response.Status = RestStatus.RestStatus401;
             }
-            return new { id };
+            return response;
         }
     }
 }

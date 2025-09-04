@@ -1,6 +1,7 @@
 ﻿using ASP.Data;
 using ASP.Data.Entities;
 using ASP.Models.Api.Group;
+using ASP.Models.Rest;
 using ASP.Services.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -55,32 +56,52 @@ namespace ASP.Controllers.Api
         }
 
         [HttpGet]
-        public IEnumerable<ProductGroup> ExecuteGET()
+        public RestResponse ExecuteGET()
         {
-            return _dataAccessor.GetProductGroups();
+            var groups = _dataAccessor.GetProductGroups();
+
+            return new RestResponse
+            {
+                Status = new RestStatus
+                {
+                    Code = 200,
+                    IsOk = true,
+                    Phrase = "OK"
+                },
+                Meta = new RestMeta
+                {
+                    ResourceName = "ProductGroups",
+                    ResourceUrl = "/api/product-group",
+                    Method = "GET",
+                    DataType = nameof(ProductGroup)
+                },
+                Data = groups
+            };
         }
 
         [HttpPost]
-        public object ExecutePOST(ApiGroupFormModel formModel)
+        public RestResponse ExecutePOST([FromForm] ApiGroupFormModel formModel)
         {
             if (string.IsNullOrEmpty(formModel.Slug))
             {
-                return new { status = 400, name = "Slug could not be empty" };
+                return new RestResponse { Status = RestStatus.RestStatus400, Meta = CreateMeta("POST"), Data = "Slug could not be empty" };
             }
+
             if (_dataAccessor.IsGroupSlugUsed(formModel.Slug))
             {
-                return new { status = 409, name = "Slug is used by other group" };
+                return new RestResponse { Status = new RestStatus { Code = 409, IsOk = false, Phrase = "Conflict" }, Meta = CreateMeta("POST"), Data = "Slug is used by other group" };
             }
+
             if (!string.IsNullOrEmpty(formModel.ParentId))
             {
                 if (!Guid.TryParse(formModel.ParentId, out Guid parsedId))
                 {
-                    return new { status = 400, name = "ParentId must be a valid UUID" };
+                    return new RestResponse { Status = RestStatus.RestStatus400, Meta = CreateMeta("POST"), Data = "ParentId must be a valid UUID" };
                 }
 
                 if (!_dataAccessor.IsGroupExists(formModel.ParentId))
                 {
-                    return new { status = 404, name = "Parent group does not exist" };
+                    return new RestResponse { Status = new RestStatus { Code = 404, IsOk = false, Phrase = "Not Found" }, Meta = CreateMeta("POST"), Data = "Parent group does not exist" };
                 }
             }
 
@@ -92,7 +113,7 @@ namespace ASP.Controllers.Api
             }
             catch (Exception ex)
             {
-                return new { status = 400, name = ex.Message };
+                return new RestResponse { Status = RestStatus.RestStatus400, Meta = CreateMeta("POST"), Data = ex.Message };
             }
 
             try
@@ -105,12 +126,24 @@ namespace ASP.Controllers.Api
                     ParentId = formModel.ParentId,
                     ImageUrl = savedName
                 });
-                return new { status = 201, name = "Created" };
+
+                return new RestResponse { Status = RestStatus.RestStatus201, Meta = CreateMeta("POST"), Data = "Created" };
             }
             catch
             {
-                return new { status = 500, name = "Error" };
+                return new RestResponse { Status = RestStatus.RestStatus500, Meta = CreateMeta("POST"), Data = "Internal Error" };
             }
+        }
+
+        private RestMeta CreateMeta(string method)
+        {
+            return new RestMeta
+            {
+                ResourceName = "ProductGroups",
+                ResourceUrl = "/api/product-group",
+                Method = method,
+                DataType = nameof(ProductGroup)
+            };
         }
     }
 }
