@@ -59,53 +59,54 @@ namespace ASP.Controllers.Api
         public RestResponse ExecuteGET()
         {
             var groups = _dataAccessor.GetProductGroups();
+            RestResponse response = new();
+            response.Meta.ResourceName = "ProductGroups";
+            response.Meta.ResourceUrl = "/api/product-group";
+            response.Meta.Method = "GET";
+            response.Meta.DataType = nameof(ProductGroup);
 
-            return new RestResponse
+            response.Status = new RestStatus
             {
-                Status = new RestStatus
-                {
-                    Code = 200,
-                    IsOk = true,
-                    Phrase = "OK"
-                },
-                Meta = new RestMeta
-                {
-                    ResourceName = "ProductGroups",
-                    ResourceUrl = "/api/product-group",
-                    Method = "GET",
-                    DataType = nameof(ProductGroup)
-                },
-                Data = groups
+                Code = 200,
+                IsOk = true,
+                Phrase = "OK"
             };
+            return response;
         }
 
         [HttpPost]
         public RestResponse ExecutePOST([FromForm] ApiGroupFormModel formModel)
         {
+            RestResponse response = new();
+
             if (string.IsNullOrEmpty(formModel.Slug))
             {
-                return new RestResponse { Status = RestStatus.RestStatus400, Meta = CreateMeta("POST"), Data = "Slug could not be empty" };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = "Slug is required";
             }
 
             if (_dataAccessor.IsGroupSlugUsed(formModel.Slug))
             {
-                return new RestResponse { Status = new RestStatus { Code = 409, IsOk = false, Phrase = "Conflict" }, Meta = CreateMeta("POST"), Data = "Slug is used by other group" };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = "Slug is already used";
             }
 
             if (!string.IsNullOrEmpty(formModel.ParentId))
             {
                 if (!Guid.TryParse(formModel.ParentId, out Guid parsedId))
                 {
-                    return new RestResponse { Status = RestStatus.RestStatus400, Meta = CreateMeta("POST"), Data = "ParentId must be a valid UUID" };
+                    response.Status = RestStatus.RestStatus400;
+                    response.Data = "ParentId is not a valid GUID";
                 }
 
                 if (!_dataAccessor.IsGroupExists(formModel.ParentId))
                 {
-                    return new RestResponse { Status = new RestStatus { Code = 404, IsOk = false, Phrase = "Not Found" }, Meta = CreateMeta("POST"), Data = "Parent group does not exist" };
+                    response.Status = RestStatus.RestStatus400;
+                    response.Data = "ParentId does not exist";
                 }
             }
 
-            string savedName;
+            string? savedName = null;
             try
             {
                 _storageService.TryGetMimeType(formModel.Image.FileName);
@@ -113,26 +114,31 @@ namespace ASP.Controllers.Api
             }
             catch (Exception ex)
             {
-                return new RestResponse { Status = RestStatus.RestStatus400, Meta = CreateMeta("POST"), Data = ex.Message };
+                response.Status = RestStatus.RestStatus400;
+                response.Data = "Image upload failed: " + ex.Message;
             }
 
             try
             {
-                _dataAccessor.AddProductGroup(new()
+                if (savedName != null)
                 {
-                    Name = formModel.Name,
-                    Description = formModel.Description,
-                    Slug = formModel.Slug,
-                    ParentId = formModel.ParentId,
-                    ImageUrl = savedName
-                });
+                    _dataAccessor.AddProductGroup(new()
+                    {
+                        Name = formModel.Name,
+                        Description = formModel.Description,
+                        Slug = formModel.Slug,
+                        ParentId = formModel.ParentId,
+                        ImageUrl = savedName
+                    });
+                }
 
-                return new RestResponse { Status = RestStatus.RestStatus201, Meta = CreateMeta("POST"), Data = "Created" };
+                response.Status = RestStatus.RestStatus201;
             }
             catch
             {
-                return new RestResponse { Status = RestStatus.RestStatus500, Meta = CreateMeta("POST"), Data = "Internal Error" };
+                response.Status = RestStatus.RestStatus500;
             }
+            return response;
         }
 
         private RestMeta CreateMeta(string method)
