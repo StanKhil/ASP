@@ -145,7 +145,72 @@ namespace ASP.Data
 
         public void AddToCart(String userId, String id)
         {
-            
+            Guid userGuid = Guid.Parse(userId);
+            Guid productGuid = Guid.Parse(id);
+
+            var user = _dataContext.Users
+                .Find(userGuid) ?? throw new ArgumentNullException("User not found", nameof(userId));
+
+            var product = _dataContext.Products
+                .Find(productGuid) ?? throw new ArgumentNullException("Product not found", nameof(id));
+
+            var cart = _dataContext.Carts
+                .Include(c => c.CartItems)
+                .FirstOrDefault(c => c.UserId == userGuid && c.PaidAt == null && c.DeletedAt == null);
+
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userGuid,
+                    CreatedAt = DateTime.UtcNow,
+                    Price = 0,
+                };
+                _dataContext.Carts.Add(cart);
+            }
+
+            CartItem? cartItem = cart.CartItems
+                .FirstOrDefault(ci => ci.ProductId == productGuid);
+
+            if (cartItem == null)
+            {
+                cartItem = new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cart.Id,
+                    ProductId = productGuid,
+                    Quantity = 1,
+                    Price = product.Price,
+                };
+                //cart.CartItems.Add(cartItem);
+                _dataContext.CartItems.Add(cartItem);
+                cart.Price += product.Price;
+            }
+            else
+            {
+                cartItem.Quantity += 1;
+                cartItem.Price += product.Price;
+                cart.Price += product.Price;
+            }
+            _dataContext.SaveChanges();
+        }
+
+        public IEnumerable<CartItem> GetActiveCartItems(String userId)
+        {
+            Guid userGuid = Guid.Parse(userId);
+
+            var user = _dataContext.Users
+                .Find(userGuid) ?? throw new ArgumentNullException("User not found", nameof(userId));
+
+            var cart = _dataContext
+                .Carts
+                .AsNoTracking()
+                .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Product)
+                .FirstOrDefault(c => c.UserId == userGuid && c.PaidAt == null && c.DeletedAt == null);
+
+            return cart?.CartItems ?? Enumerable.Empty<CartItem>();
         }
     }
 }

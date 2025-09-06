@@ -19,7 +19,7 @@ namespace ASP.Models.Api.Product
 
 
         [FromForm(Name = "product-price")]
-        public double Price { get; set; }
+        public decimal Price { get; set; }
 
         [FromForm(Name = "product-stock")]
         public int Stock { get; set; }

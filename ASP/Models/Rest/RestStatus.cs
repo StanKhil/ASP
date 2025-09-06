@@ -2,9 +2,9 @@
 {
     public class RestStatus
     {
-        public bool IsOk { get; set; }
-        public int Code { get; set; }
-        public String Phrase { get; set; } = null!;
+        public bool IsOk { get; set; } = true;
+        public int Code { get; set; } = 200;
+        public String Phrase { get; set; } = "OK";
 
         public static readonly RestStatus RestStatus403 = new()
         {

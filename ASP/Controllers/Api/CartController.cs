@@ -8,9 +8,11 @@ namespace ASP.Controllers.Api
 {
     [Route("api/cart")]
     [ApiController]
-    public class CartController(DataAccessor dataAccessor) : ControllerBase
+    public class CartController(DataAccessor dataAccessor,
+        ILogger<CartController> logger) : ControllerBase
     {
         private readonly DataAccessor _dataAccessor = dataAccessor;
+        private readonly ILogger<CartController> _logger = logger;
 
         [HttpPost("{id}")]
         public Object AddToCart([FromRoute] String id)
@@ -42,10 +44,11 @@ namespace ASP.Controllers.Api
                     response.Data = e.Message;
                         response.Meta.DataType = "string";
                     }
-                catch
+                catch(Exception e)
                 {
                     response.Status = RestStatus.RestStatus500;
-                }
+                    _logger.LogError(e, "Error adding product {ProductId} to cart for user {UserId}", id, userId);
+                    }
             }
             else
             {

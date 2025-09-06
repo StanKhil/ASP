@@ -1,7 +1,58 @@
-﻿@{
+﻿@model ASP.Models.Shop.ShopCartPageModel
+@{
     ViewData["Title"] = "Cart";
 }
 
-<div class="text-center">
+<div class="text-center mb-4">
     <h1 class="display-4">Cart</h1>
 </div>
+
+@if (Model.ActiveCartItems == null)
+{
+    <div class="alert alert-danger" role="alert">
+        You need to be logged in to view your cart.
+    </div>
+}
+else if (!Model.ActiveCartItems.Any())
+{
+    <div class="alert alert-info" role="alert">
+        Your cart is empty.
+    </div>
+}
+else
+{
+    foreach (var cartItem in Model.ActiveCartItems)
+    {
+        <div class="row align-items-center border-bottom py-3">
+            <div class="col-4 col-sm-3 col-md-2 text-center">
+                <a href="/Shop/Item/@cartItem.Product.Id">
+                    <img src="/Storage/Item/@(cartItem.Product.ImageUrl)"
+                         class="img-fluid rounded shadow-sm"
+                         alt="@cartItem.Product.Name" />
+                </a>
+            </div>
+            <div class="col-8 col-sm-5 col-md-4">
+                <p>@cartItem.Product.Name</p><br />
+                <p class="text-muted d-none d-sm-block">
+                    @cartItem.Product.Description
+                </p>
+            </div>
+            <div class="col-6 col-sm-2 col-md-2 mt-2 mt-sm-0">
+                ₴ @cartItem.Product.Price
+            </div>
+            <div class="col-6 col-sm-2 col-md-2 text-center mt-2 mt-sm-0">
+                <div class="d-flex justify-content-center align-items-center">
+                    <button class="btn btn-outline-warning">-</button>
+                    <span class="px-2">@cartItem.Quantity</span>
+                    <button class="btn btn-outline-success">+</button>
+                </div>
+            </div>
+            <div class="col-6 col-sm-2 col-md-1 mt-2 mt-md-0">
+                ₴ @cartItem.Price
+            </div>
+            <div class="col-6 col-sm-2 col-md-1 text-center mt-2 mt-md-0">
+                <button class="btn btn-outline-danger">X</button>
+            </div>
+        </div>
+    }
+}

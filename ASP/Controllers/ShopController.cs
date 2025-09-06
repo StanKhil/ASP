@@ -1,6 +1,7 @@
 ﻿using ASP.Data;
 using ASP.Models.Shop;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ASP.Controllers
 {
@@ -54,7 +55,14 @@ namespace ASP.Controllers
 
         public IActionResult Cart()
         {
-            return View();
+            ShopCartPageModel model = new();
+            if (HttpContext.User.Identity?.IsAuthenticated ?? false)
+            {
+                String? userId = HttpContext.User.Claims
+                    .FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)!.Value;
+                model.ActiveCartItems = _dataAccessor.GetActiveCartItems(userId);
+            }
+            return View(model);
         }
     }
 }
