@@ -42,16 +42,25 @@ else
             </div>
             <div class="col-6 col-sm-2 col-md-2 text-center mt-2 mt-sm-0">
                 <div class="d-flex justify-content-center align-items-center">
-                    <button class="btn btn-outline-warning">-</button>
+                    <button 
+                        data-cart-product-id="@(cartItem.Product.Id)" 
+                        data-increment="-1"
+                    class="btn btn-outline-warning">-</button>
                     <span class="px-2">@cartItem.Quantity</span>
-                    <button class="btn btn-outline-success">+</button>
+                    <button data-cart-product-id="@(cartItem.Product.Id)"
+                            data-increment="1" 
+                            class="btn btn-outline-success">
+                        +
+                    </button>
                 </div>
             </div>
             <div class="col-6 col-sm-2 col-md-1 mt-2 mt-md-0">
                 ₴ @cartItem.Price
             </div>
             <div class="col-6 col-sm-2 col-md-1 text-center mt-2 mt-md-0">
-                <button class="btn btn-outline-danger">X</button>
+                <button id="delete-cart-product" data-cart-product-id="@(cartItem.Product.Id)" class="btn btn-outline-danger">
+					<i class="bi bi-trash"></i>
+                </button>
             </div>
         </div>
     }

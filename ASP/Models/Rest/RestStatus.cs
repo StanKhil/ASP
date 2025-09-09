@@ -40,5 +40,12 @@
             IsOk = true,
             Phrase = "Created"
         };
+
+        public static readonly RestStatus RestStatus409 = new()
+        {
+            Code = 409,
+            IsOk = false,
+            Phrase = "Conflict"
+        };
     }
 }

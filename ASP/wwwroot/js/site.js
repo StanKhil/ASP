@@ -66,6 +66,7 @@ document.addEventListener('submit', e => {
     }
 });
 
+
 function unverified(input) {
     input.classList.remove("is-invalid");
     input.classList.remove("is-valid");

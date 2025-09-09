@@ -7,6 +7,9 @@
 	String userLogin = isAuth 
     ? Context.User.Claims
     .First(c => c.Type == ClaimTypes.Sid).Value : "";
+    UserCartModel? userCartModel = Context.Items.ContainsKey(
+		nameof(UserCartModel)) ? Context.Items[nameof(UserCartModel)] as UserCartModel : null;
+	
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -58,6 +61,10 @@
                     <div >
                         @if (isAuth)
                         {
+                            <a asp-controller="Shop" class="btn btn-primary" asp-action="Cart">
+                                <i class="bi bi-cart2"></i>
+								<span>@(userCartModel?.ActiveCart?.CartItems.Count() ?? 0) | @(userCartModel?.ActiveCart?.Price)</span>
+                            </a>
                             <a asp-area="" asp-controller="User" asp-action="Profile" asp-route-id="@userLogin">
                                 <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold mb-1"
                                       style="width: 40px; height: 40px;"

@@ -1,5 +1,6 @@
 using ASP.Data;
 using ASP.Middleware.Auth;
+using ASP.Middleware.Cart;
 using ASP.Services.Email;
 using ASP.Services.Identity;
 using ASP.Services.JWT;
@@ -70,6 +71,8 @@ namespace ASP
             app.UseAuthSession();
 
             app.UseAuthJwt();
+
+            app.UseUserCart();
 
             app.MapControllerRoute(
                 name: "default",

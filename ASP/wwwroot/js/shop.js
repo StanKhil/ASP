@@ -14,7 +14,49 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let btn of document.querySelectorAll("[data-product-id]")) {
         btn.addEventListener("click", addToCartClick);
     }
+    for (let btn of document.querySelectorAll("[data-cart-product-id]")) {
+        btn.onclick = modifyCartQuantity;
+    }
+
+    for (let btn of document.querySelectorAll("[data-cart-product-id")) {
+        btn.onclick = removeFromCart;
+    }
 });
+
+function modifyCartQuantity(e) {
+    const btn = e.target.closest("[data-cart-product-id]");
+    if (!btn) throw `modifyCartQuantity: closest("[data-cart-product-id]") not found`;
+    const productId = btn.getAttribute("data-cart-product-id");
+    const increment = btn.getAttribute("data-increment");
+    fetch(`/api/cart/${productId}?increment=${increment}`, {
+        method: 'PATCH'
+    }).then(r => r.json()).then(j => {
+        if (j.status.isOk) {
+            window.location.reload();
+            console.log(j);
+        }
+        else {
+            alarm(j.data);
+        }
+    });
+}
+
+function removeFromCart(e) {
+    if (!confirm("Видалити товар з кошика?")) return;
+    console.log(e.currentTarget);
+    fetch(`/api/cart/${e.currentTarget.getAttribute("data-cart-product-id") }`, {
+        method: 'DELETE'
+    }).then(r => r.json()).then(j => {
+        if (j.status.isOk) {
+            window.location.reload();
+            console.log(j);
+        }
+        else {
+            alarm(j.data);
+        }
+    });
+}
+
 
 function addToCartClick(e) {
     const btn = e.target.closest("[data-product-id]");
@@ -84,3 +126,7 @@ function handleAddGroup(form) {
         });
 }
 
+
+function alarm(msg) {
+    alert(msg);
+}

@@ -22,7 +22,7 @@ namespace ASP.Data
             IQueryable<UserAccess> source = _dataContext.UserAccesses
                 .Include(ua => ua.UserData)
                 .Include(ua => ua.UserRole);
-            if (isEditable) source = source.AsNoTracking();
+            if (!isEditable) source = source.AsNoTracking();
             return source
                 .FirstOrDefault(ua => ua.Login == userLogin 
                 && ua.UserData.DeletedAt == null);
@@ -196,21 +196,82 @@ namespace ASP.Data
             _dataContext.SaveChanges();
         }
 
+        
+
         public IEnumerable<CartItem> GetActiveCartItems(String userId)
         {
+            var cart = GetActiveCart(userId);
+            return cart?.CartItems ?? [];
+        }
+        public IEnumerable<Cart> GetCarts()
+        {
+            return [];
+        }
+        public Cart? GetActiveCart(String userId, bool isEditable = false)
+        {
+            
             Guid userGuid = Guid.Parse(userId);
 
+            var user = _dataContext.Users.Find(userGuid) ??
+                throw new ArgumentException("user not found", nameof(userId));
+            IQueryable<Cart> source = _dataContext.Carts
+                .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Product);
+
+            if(!isEditable) source = source.AsNoTracking();
+
+            return source
+                .FirstOrDefault(c => c.UserId == userGuid
+        && c.PaidAt == null && c.DeletedAt == null);
+        }
+
+        public void ModifyCart(string userId, string id, int increment)
+        {
+            Guid userGuid = Guid.Parse(userId);
+            Guid productGuid = Guid.Parse(id);
             var user = _dataContext.Users
                 .Find(userGuid) ?? throw new ArgumentNullException("User not found", nameof(userId));
+            Cart cart = GetActiveCart(userId, true)
+                ?? throw new ArgumentNullException("Active cart not found");
 
-            var cart = _dataContext
-                .Carts
-                .AsNoTracking()
-                .Include(c => c.CartItems)
-                .ThenInclude(ci => ci.Product)
-                .FirstOrDefault(c => c.UserId == userGuid && c.PaidAt == null && c.DeletedAt == null);
+            CartItem cartItem = cart.CartItems
+                .FirstOrDefault(ci => ci.ProductId == productGuid) ?? throw new ArgumentNullException("Product not found", nameof(id));
 
-            return cart?.CartItems ?? Enumerable.Empty<CartItem>();
+            int newQuantity = cartItem.Quantity + increment;
+            if (newQuantity < 0)
+            {
+                throw new ArgumentOutOfRangeException("Resulting quantity cannot be negative");
+            }
+            else if(newQuantity > cartItem.Product.Stock)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            if(newQuantity == 0)
+            {
+                _dataContext.CartItems.Remove(cartItem);
+            }
+            else
+            {
+                cartItem.Quantity = newQuantity;
+                cartItem.Price += increment * cartItem.Product.Price;
+                cart.Price += increment * cartItem.Product.Price;
+            }
+            _dataContext.SaveChanges();
+        }
+
+        public void RemoveFromCart(string userId, string id)
+        {
+            Guid userGuid = Guid.Parse(userId);
+            Guid productGuid = Guid.Parse(id);
+            var user = _dataContext.Users
+                .Find(userGuid) ?? throw new ArgumentNullException("User not found", nameof(userId));
+            Cart cart = GetActiveCart(userId, true)
+                ?? throw new ArgumentNullException("Active cart not found");
+            CartItem cartItem = cart.CartItems
+                .FirstOrDefault(ci => ci.ProductId == productGuid) ?? throw new ArgumentNullException("Product not found", nameof(id));
+            _dataContext.CartItems.Remove(cartItem);
+            cart.Price -= cartItem.Price;
+            _dataContext.SaveChanges();
         }
     }
 }
