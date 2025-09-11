@@ -21,6 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let btn of document.querySelectorAll("[data-cart-product-id")) {
         btn.onclick = removeFromCart;
     }
+
+    let btn = document.getElementById("discard-cart");
+    if (btn) btn.onclick = discardCartClick;
+    btn = document.getElementById("checkout-cart");
+    if (btn) btn.onclick = checkoutCartClick;
 });
 
 function modifyCartQuantity(e) {
@@ -44,7 +49,9 @@ function modifyCartQuantity(e) {
 function removeFromCart(e) {
     if (!confirm("Видалити товар з кошика?")) return;
     console.log(e.currentTarget);
-    fetch(`/api/cart/${e.currentTarget.getAttribute("data-cart-product-id") }`, {
+    target = e.currentTarget;
+    if (!target) target = e.target;
+    fetch(`/api/cart/${target.getAttribute("data-cart-product-id") }`, {
         method: 'DELETE'
     }).then(r => r.json()).then(j => {
         if (j.status.isOk) {
@@ -126,6 +133,52 @@ function handleAddGroup(form) {
         });
 }
 
+function discardCartClick() {
+    const count = document
+        .getElementById("total-count")
+        .getAttribute("data-cart-total");
+    const price = document
+        .getElementById("total-price")
+        .getAttribute("data-cart-total");
+
+    if (confirm(`Ви впевнені, що хочете видалити кошик з ${count} товарів та сумою ${price} грн?`)) {
+        fetch("/api/cart", {
+            method: "DELETE"
+        })
+            .then(r => r.json()).then(j => {
+                if (j.status.isOk) {
+                    alarm("Cart discarded");
+                    window.location = "/Shop";
+                }
+                else {
+                    alarm(j.data);
+                }
+            });
+    }
+}
+
+function checkoutCartClick() {
+    const count = document
+        .getElementById("total-count")
+        .getAttribute("data-cart-total");
+    const price = document
+        .getElementById("total-price")
+        .getAttribute("data-cart-total");
+    if (confirm(`Ви підтверджуєте заповлення на ${count} товари та загальною ціною ${price}`)) {
+        fetch("/api/cart", {
+            method: "PUT"
+        }).then(r => r.json()).then(j => {
+            if (j.status.isOk) {
+                alarm("Congratulations! Order completed.");
+                window.location = "/Shop";
+            }
+            else {
+                alarm(j.data);
+            }
+        });
+    }
+    
+}
 
 function alarm(msg) {
     alert(msg);

@@ -249,6 +249,7 @@ namespace ASP.Data
             if(newQuantity == 0)
             {
                 _dataContext.CartItems.Remove(cartItem);
+                cart.Price -= cartItem.Price;
             }
             else
             {
@@ -258,7 +259,20 @@ namespace ASP.Data
             }
             _dataContext.SaveChanges();
         }
-
+        public void CheckoutActiveCart(String userId)
+        {
+            Cart cart = GetActiveCart(userId, true)
+                ?? throw new ArgumentNullException("Active cart not found");
+            cart.PaidAt = DateTime.UtcNow;
+            _dataContext.SaveChanges();
+        }
+        public void DiscardActiveCart(String userId)
+        {
+            Cart cart = GetActiveCart(userId, true)
+                ?? throw new ArgumentNullException("Active cart not found");
+            cart.DeletedAt = DateTime.UtcNow;
+            _dataContext.SaveChanges();
+        }
         public void RemoveFromCart(string userId, string id)
         {
             Guid userGuid = Guid.Parse(userId);

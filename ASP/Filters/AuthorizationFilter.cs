@@ -23,9 +23,9 @@ namespace ASP.Filters
             }
         }
 
-        public void OnActionExecuted(ActionExecutedContext context)
+        override public void OnActionExecuted(ActionExecutedContext context)
         {
-            // Do something after the action executes.
+            base.OnActionExecuted(context);
         }
     }
 }
