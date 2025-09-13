@@ -26,6 +26,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btn) btn.onclick = discardCartClick;
     btn = document.getElementById("checkout-cart");
     if (btn) btn.onclick = checkoutCartClick;
+    btn = document.getElementById("repeat-cart");
+    if (btn) btn.onclick = repeatCartClick;
 });
 
 function modifyCartQuantity(e) {
@@ -178,6 +180,14 @@ function checkoutCartClick() {
         });
     }
     
+}
+
+function repeatCartClick(e) {
+    fetch("/api/cart/repeat/" + e.target.getAttribute("data-cart-id"), {
+        method: "POST"
+    })
+        .then(r => r.json())
+        .then(console.log);
 }
 
 function alarm(msg) {

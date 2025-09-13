@@ -1,4 +1,6 @@
-﻿namespace ASP.Models.User
+﻿using ASP.Data.Entities;
+
+namespace ASP.Models.User
 {
     public class UserProfilePageModel
     {
@@ -7,5 +9,6 @@
         public String? Email { get; set; } 
         public DateTime? Birthdate { get; set; }
         public DateTime? RegisteredAt { get; set; }
+        public IEnumerable<Cart> Carts { get; set; } = [];
     }
 }

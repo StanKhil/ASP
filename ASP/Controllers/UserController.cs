@@ -241,6 +241,7 @@ namespace ASP.Controllers
                     {
                         model.IsPersonal = true;
                         model.Birthdate = ua.UserData.Birthdate;
+                        model.Carts = _dataAccessor.GetCarts(ua.UserId, true);
                     }
                     else  // Перегляд профілю іншого користувача
                     {

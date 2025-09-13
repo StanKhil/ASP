@@ -10,7 +10,9 @@
 @if (Model.ActiveCartItems == null)
 {
     <div class="alert alert-danger" role="alert">
-        You need to be logged in to view your cart.
+        @(Context.User.Identity?.IsAuthenticated ?? false
+			? "History not found."
+			: "You need to be logged in to view your cart.")
     </div>
 }
 else if (!Model.ActiveCartItems.Any())
@@ -79,7 +81,12 @@ else
 
     <div class="row mt-5">
         <div class="col pe-2"><a asp-action="Index" class="w-100 btn btn-dark">Shop</a></div>
-        <div class="col px-2"><button id="discard-cart" class="w-100 btn btn-danger">Cancel</button></div>
-        <div class="col ps-2"><button id="checkout-cart" class="w-100 btn btn-primary">Pay</button></div>
+        @if(Model.IsActive){
+            <div class="col px-2"><button id="discard-cart" class="w-100 btn btn-danger">Cancel</button></div>
+            <div class="col ps-2"><button id="checkout-cart" class="w-100 btn btn-primary">Pay</button></div>
+        }
+        else{
+            <div class="col ps-2"><button id="repeat-cart" class="w-100 btn btn-primary" data-cart-id="@Model.ActiveCartItems.First().CartId">Repeat</button></div>
+        }
     </div>
 }

@@ -121,6 +121,12 @@ namespace ASP.Controllers.Api
             return response;
         }
 
+        [HttpPost("repeat/{id}")]
+        public RestResponse RepeatCart(String id)
+        {
+            response.Data = id;
+            return response;
+        }
         private void ExecuteAuthority(Action<String> action, String callerName)
         {
             if (HttpContext.User.Identity?.IsAuthenticated ?? false)

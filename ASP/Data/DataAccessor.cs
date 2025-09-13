@@ -2,6 +2,7 @@
 using ASP.Models.Api.Group;
 using ASP.Models.Api.Product;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ASP.Data
 {
@@ -203,9 +204,12 @@ namespace ASP.Data
             var cart = GetActiveCart(userId);
             return cart?.CartItems ?? [];
         }
-        public IEnumerable<Cart> GetCarts()
+        public IEnumerable<Cart> GetCarts(Guid userGuid, bool withDeleted = false)
         {
-            return [];
+            return _dataContext.Carts
+                .Include(c => c.CartItems)
+                .Where(c => c.UserId == userGuid && (withDeleted || c.DeletedAt == null))
+                .AsEnumerable();
         }
         public Cart? GetActiveCart(String userId, bool isEditable = false)
         {
@@ -286,6 +290,16 @@ namespace ASP.Data
             _dataContext.CartItems.Remove(cartItem);
             cart.Price -= cartItem.Price;
             _dataContext.SaveChanges();
+        }
+
+        public Cart? GetCartById(String cartId)
+        {
+            Guid cartGuid = Guid.Parse(cartId);
+            return _dataContext.Carts
+                .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Product)
+                .AsNoTracking()
+                .FirstOrDefault(c => c.Id == cartGuid);
         }
     }
 }

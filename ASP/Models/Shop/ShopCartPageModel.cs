@@ -6,5 +6,6 @@ namespace ASP.Models.Shop
     {
         public IEnumerable<CartItem> ActiveCartItems
         { get; set; } = null!;
+        public bool IsActive { get; set; } = true;
     }
 }
